@@ -193,4 +193,5 @@ Its just that we are hyperactive on our own forum!
 == Upgrade Notice ==
 
 = 1.6.5 =
+
 Fixed bug in archive purge settings.
