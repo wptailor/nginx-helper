@@ -209,6 +209,7 @@ namespace rtCamp\WP\Nginx {
 
 			$parse = parse_url( $url );
 
+			do_action_ref_array( 'nginx_purge_url', array( $this, $url, $feed ) );
 			switch ($rt_wp_nginx_helper->options['purge_method']) {
 				case 'unlink_files':
 					$_url_purge_base = $parse[ 'scheme' ] . '://' . $parse[ 'host' ] . $parse[ 'path' ];
@@ -230,7 +231,8 @@ namespace rtCamp\WP\Nginx {
 				case 'get_request':
 					// Go to default case
 				default:
-					$_url_purge_base = $parse[ 'scheme' ] . '://' . $parse[ 'host' ] . '/purge' . $parse[ 'path' ];
+					$_url_purge_prefix = apply_filters( 'nginx_purge_request_prefix', 'purge', $url );
+					$_url_purge_base = sprintf( '%s://%s/%s%s', $parse[ 'scheme' ], $parse[ 'host' ], $_url_purge_prefix, $parse[ 'path' ] );
 					$_url_purge = $_url_purge_base;
 
 					if ( isset( $parse[ 'query' ] ) && $parse[ 'query' ] != '' ) {
@@ -822,14 +824,15 @@ namespace rtCamp\WP\Nginx {
 				case 'get_request':
 					// Go to default case
 				default:
-					$_url_purge_base = $parse[ 'scheme' ] . '://' . $parse[ 'host' ] . '/purge';
 					
 					if( is_array( $purge_urls ) && ! empty( $purge_urls ) ) {
 						foreach ($purge_urls as $purge_url ) {
 						    $purge_url = trim( $purge_url );
 						    
 						    if( strpos( $purge_url, '*' ) === false ) {
-						        $purge_url = $_url_purge_base . $purge_url;
+						        $_url_purge_prefix = apply_filters( 'nginx_purge_request_prefix', 'purge', home_url( $purge_url ) );
+						        $purge_url = sprintf( '%s://%s/%s%s', $parse[ 'scheme' ], $parse[ 'host' ], $_url_purge_prefix, $purge_url );
+						    
 						        $this->log( "- Purging URL | " . $purge_url );
 						        $this->_do_remote_get( $purge_url );
 						    }
